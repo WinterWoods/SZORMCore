@@ -37,7 +37,7 @@ namespace SZORM.Factory.Oracle
 
         public IStructure CreateStructureCheck()
         {
-            return new MySql.StructureToMySql();
+            return new Oracle.StructureToOracle();
         }
 
         public DbExpressionVisitor<DbExpression> GetSqlGenerator()

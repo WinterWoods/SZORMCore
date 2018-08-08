@@ -12,27 +12,27 @@ namespace SZORM.Factory
 {
     internal class DatabaseProviderFactory
     {
-        public static IDatabaseProvider CreateDatabaseProvider(string DatabaseType,IDbConnection dbConnection=null)
+        public static IDatabaseProvider CreateDatabaseProvider(string DatabaseType, IDatabaseProvider dbDatabaseProvider =null)
         {
-            if (DatabaseType == "MySql")
+            if (DatabaseType.ToLower() == "MySql".ToLower())
             {
                 return new MySql.MySqlDatabaseProvider();
             }
-            //else if (DatabaseType == "Oracle")
-            //{
-            //    return new Oracle.DbContextServiceProvider(new Oracle.OracleConnectionFactory(config));
-            //}
-            //else if (DatabaseType == "SQLite")
-            //{
-            //    return new SQLite.DbContextServiceProvider(new SQLite.SQLiteConnectionFactory(config));
-            //}
-            //else if (DatabaseType == "SqlServer")
-            //{
-            //    return new SqlServer.DbContextServiceProvider(new SqlServer.SqlServerConnectionFactory(config));
-            //}
+            else if (DatabaseType.ToLower() == "Oracle".ToLower())
+            {
+                return new Oracle.OracleDatabaseProvider();
+            }
+            else if (DatabaseType.ToLower() == "Sqlite".ToLower())
+            {
+                return new SQLite.SqliteDatabaseProvider();
+            }
+            else if (DatabaseType.ToLower() == "SqlServer".ToLower())
+            {
+                return new SqlServer.SqlServerDatabaseProvider();
+            }
             else
             {
-                throw new Exception("暂不支持的数据库");
+                return dbDatabaseProvider;
             }
         }
     }

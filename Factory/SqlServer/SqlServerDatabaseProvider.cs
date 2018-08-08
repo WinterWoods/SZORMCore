@@ -37,7 +37,7 @@ namespace SZORM.Factory.SqlServer
 
         public IStructure CreateStructureCheck()
         {
-            return new MySql.StructureToMySql();
+            return new SqlServer.StructureToSqlServer();
         }
         public DbExpressionVisitor<DbExpression> GetSqlGenerator()
         {

@@ -22,20 +22,4 @@ namespace SZORM.Factory.Oracle
             return sql;
         }
     }
-
-    class DbExpressionTranslator_ConvertToUppercase : IDbExpressionTranslator
-    {
-        public static readonly DbExpressionTranslator_ConvertToUppercase Instance = new DbExpressionTranslator_ConvertToUppercase();
-
-        public string Translate(DbExpression expression, out List<DbParam> parameters)
-        {
-            SqlGenerator_ConvertToUppercase generator = new SqlGenerator_ConvertToUppercase();
-            expression.Accept(generator);
-
-            parameters = generator.Parameters;
-            string sql = generator.SqlBuilder.ToSql();
-
-            return sql;
-        }
-    }
 }

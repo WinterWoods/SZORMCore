@@ -982,7 +982,7 @@ namespace SZORM.Factory.Oracle
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentException("name");
 
-            this._sqlBuilder.Append("\"", name, "\"");
+            this._sqlBuilder.Append("\"", name.ToUpper(), "\"");
         }
         void ConcatOperands(IEnumerable<DbExpression> operands, string connector)
         {

@@ -37,7 +37,7 @@ namespace SZORM.Factory.SQLite
 
         public IStructure CreateStructureCheck()
         {
-            return new MySql.StructureToMySql();
+            return new SQLite.StructureToSQLite();
         }
 
         public DbExpressionVisitor<DbExpression> GetSqlGenerator()

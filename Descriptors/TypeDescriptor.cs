@@ -166,7 +166,7 @@ namespace SZORM.Descriptors
                 SZTableAttribute.DisplayName = entityType.Name;
                 SZTableAttribute.TableName = entityType.Name;
             }
-            this.Table = new DbTable(SZTableAttribute.TableName, SZTableAttribute.DisplayName);
+            this.Table = new DbTable(SZTableAttribute.TableName);
         }
         void InitMemberInfo()
         {

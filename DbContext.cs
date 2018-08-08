@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.Common;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -41,6 +42,16 @@ namespace SZORM
             Type type = GetType();
             DbContextInit(type.Name,il);
         }
+        public DbContext(string dbContextName, IsolationLevel il = IsolationLevel.ReadCommitted)
+        {
+            DbContextInit(dbContextName, il);
+        }
+        public DbContext(string dbType, string connStr, IsolationLevel il = IsolationLevel.ReadCommitted)
+        {
+            _dbType = dbType;
+            _dbConnectionStr = connStr;
+            Init(il);
+        }
         public void DbContextInit(string dbContextName,IsolationLevel il = IsolationLevel.ReadCommitted)
         {
             //获取名字
@@ -48,6 +59,10 @@ namespace SZORM
             if (isHave == null)
             {
                 var builder = new ConfigurationBuilder();
+                if (!File.Exists("szorm.json"))
+                {
+                    throw new Exception("没有配置文件szorm.json");
+                }
                 builder.AddJsonFile("szorm.json");
 
 

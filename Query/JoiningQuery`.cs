@@ -55,7 +55,7 @@ namespace SZORM.Query
 
         public IJoiningQuery<T1, T2, T3> Join<T3>(JoinType joinType, Expression<Func<T1, T2, T3, bool>> on)
         {
-            return this.Join<T3>(Query<T3>(), joinType, on);
+            return this.Join<T3>(new Query<T3>(this.DbContext, ""), joinType, on);
         }
         public IJoiningQuery<T1, T2, T3> Join<T3>(IQuery<T3> q, JoinType joinType, Expression<Func<T1, T2, T3, bool>> on)
         {

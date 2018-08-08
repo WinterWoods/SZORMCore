@@ -1,0 +1,19 @@
+{
+  "DB": {
+    "type": "MySql",
+    "connStr": "Database='test';Data Source='127.0.0.1';User Id='root';Password='sz06181102';charset='utf8mb4';pooling=false"
+  },
+  "DB1": {
+    "type": "Sqlite",
+    "connStr": "data source=EF6.db"
+  },
+  "DB2": {
+    "type": "Oracle",
+    "connStr": "user id=szorm;password=szorm;data source=(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=127.0.0.1)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=xe)))"
+  },
+  "DB3": {
+    "type": "SqlServer",
+    "connStr": "Data Source=127.0.0.1,1433;Initial Catalog=test;User ID=yy;Password=yy;"
+  }
+
+}
