@@ -87,12 +87,20 @@ namespace SZORM
             _dbConnectionStr = Cache.Get(dbContextName + ":connStr").ToString();
             Init(il);
         }
-        public DbContext(IDbConnection conn,string DatabaseTyp, IsolationLevel il = IsolationLevel.ReadCommitted)
+        public DbContext(string connStr, IDatabaseProvider databaseProvider, IsolationLevel il = IsolationLevel.ReadCommitted)
         {
-            //直接进行初始化
-            _dbConnectionStr = conn.ConnectionString;
-            _dbType = DatabaseTyp;
-            Init(il);
+            _il = il;
+            _dbConnectionStr = connStr;
+            var newDatabase= DatabaseProviderFactory.CreateDatabaseProvider("", databaseProvider);
+            _dbDatabaseProvider = newDatabase;
+            _dbType = newDatabase.DatabaseType;
+
+            //开始缓存数据结构,并初始化dbset
+            _typeDescriptors = TypeDescriptors.GetTypeDescriptors(this);
+            //初始化数据链接
+            InitDb();
+            //初始化数据库结构
+            InternalAdoSession.BeginTransaction(_il);
         }
         private void Init(IsolationLevel il)
         {

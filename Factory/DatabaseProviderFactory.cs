@@ -32,7 +32,10 @@ namespace SZORM.Factory
             }
             else
             {
-                return dbDatabaseProvider;
+                if (dbDatabaseProvider != null)
+                    return dbDatabaseProvider;
+                else
+                    throw new Exception("其他数据库类型必须实现该类");
             }
         }
     }
