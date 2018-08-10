@@ -11,6 +11,7 @@ namespace SZORM
         IQuery<TResult> Select<TResult>(Expression<Func<T, TResult>> selector);
 
         IQuery<T> Where(Expression<Func<T, bool>> predicate);
+        IOrderedQuery<T> Order<K>(string orderKey, string orderType);
         IOrderedQuery<T> OrderBy<K>(Expression<Func<T, K>> keySelector);
         IOrderedQuery<T> OrderByDesc<K>(Expression<Func<T, K>> keySelector);
         IQuery<T> Skip(int count);

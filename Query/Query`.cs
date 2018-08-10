@@ -54,6 +54,22 @@ namespace SZORM.Query
             WhereExpression e = new WhereExpression(typeof(T), this._expression, predicate);
             return new Query<T>(this._dbContext, e, this._trackEntity);
         }
+        public IOrderedQuery<T> Order<K>(string orderKey, string orderType)
+        {
+            Checks.NotNull(orderKey, "orderKey");
+            Checks.NotNull(orderType, "orderType");
+            LambdaExpression keySelector = ConvertToLambda<T>(orderKey);
+
+            QueryExpressionType orderMethod;
+
+            if (orderType.ToUpper() == "ASC")
+                orderMethod = QueryExpressionType.OrderBy;
+            else
+                orderMethod = QueryExpressionType.OrderByDesc;
+
+            OrderExpression e = new OrderExpression(typeof(T), this._expression, orderMethod, keySelector);
+            return new OrderedQuery<T>(this._dbContext, e, this._trackEntity);
+        }
         public IOrderedQuery<T> OrderBy<K>(Expression<Func<T, K>> keySelector)
         {
             Utils.CheckNull(keySelector);
@@ -330,6 +346,29 @@ namespace SZORM.Query
         {
             InternalQuery<T> internalQuery = this.GenerateIterator();
             return internalQuery.ToString();
+        }
+        static LambdaExpression ConvertToLambda<T>(string memberName)
+        {
+            Type entityType = typeof(T);
+
+            Type currType = entityType;
+            ParameterExpression parameterExp = Expression.Parameter(entityType, "a");
+            Expression exp = parameterExp;
+            MemberInfo memberIfo = currType.GetProperty(memberName);
+
+            if (memberIfo == null)
+                throw new ArgumentException(string.Format("实体类 '{0}' 没有找到该属性 '{1}'", currType.FullName, memberName));
+
+            exp = Expression.MakeMemberAccess(exp, memberIfo);
+            currType = exp.Type;
+
+            Type delegateType = null;
+
+            delegateType = typeof(Func<,>).MakeGenericType(new Type[] { typeof(T), exp.Type });
+
+            LambdaExpression lambda = Expression.Lambda(delegateType, exp, parameterExp);
+
+            return lambda;
         }
     }
 }
