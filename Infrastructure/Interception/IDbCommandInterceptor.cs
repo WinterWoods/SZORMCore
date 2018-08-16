@@ -8,6 +8,7 @@ namespace SZORM.Infrastructure.Interception
     public interface IDbCommandInterceptor
     {
         void ReaderExecuting(IDbCommand command, DbCommandInterceptionContext<IDataReader> interceptionContext);
+        void NonQueryExecuting();
         void ReaderExecuted(IDbCommand command, DbCommandInterceptionContext<IDataReader> interceptionContext);
 
         void NonQueryExecuting(IDbCommand command, DbCommandInterceptionContext<int> interceptionContext);

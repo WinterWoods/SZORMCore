@@ -52,19 +52,22 @@ namespace SZORM
             _dbConnectionStr = connStr;
             Init(il);
         }
-        public void DbContextInit(string dbContextName,IsolationLevel il = IsolationLevel.ReadCommitted)
+        public void DbContextInit(string dbContextName, IsolationLevel il = IsolationLevel.ReadCommitted)
         {
             //获取名字
             var isHave = Cache.Get(dbContextName);
             if (isHave == null)
             {
                 var builder = new ConfigurationBuilder();
-                if (!File.Exists("szorm.json"))
+                var path = Directory.GetCurrentDirectory();
+                if (!File.Exists("szorm.json") && !File.Exists("appsettings.json"))
                 {
                     throw new Exception("没有配置文件szorm.json");
                 }
-                builder.AddJsonFile("szorm.json");
-
+                if (File.Exists("szorm.json"))
+                    builder.AddJsonFile("szorm.json");
+                if (File.Exists("appsettings.json"))
+                    builder.AddJsonFile("appsettings.json");
 
                 var configuration = builder.Build();
 
@@ -76,7 +79,7 @@ namespace SZORM
                 var tmpConnStr = configuration[dbContextName + ":connStr"];
                 if (string.IsNullOrEmpty(tmpConnStr))
                 {
-                    throw new Exception("未配置"+ dbContextName + "类型connStr");
+                    throw new Exception("未配置" + dbContextName + "类型connStr");
                 }
 
                 Cache.Add(dbContextName, "1");

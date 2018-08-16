@@ -249,7 +249,7 @@ namespace SZORM
         public TEntity Find(object keyValue)
         {
             Expression<Func<TEntity, bool>> predicate = PredicateBuilds.BuildPredicate<TEntity>(keyValue);
-            var q = new Query<TEntity>(this.DbContext,string.Empty).Where(predicate);
+            var q = new Query<TEntity>(this.DbContext).Where(predicate);
 
             return q.FirstOrDefault();
         }

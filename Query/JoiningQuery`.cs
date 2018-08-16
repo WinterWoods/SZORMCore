@@ -22,15 +22,6 @@ namespace SZORM.Query
         public List<JoiningQueryInfo> JoinedQueries { get { return this._joinedQueries; } }
         public List<LambdaExpression> FilterPredicates { get { return this._filterPredicates; } }
 
-        public virtual IQuery<TEntity> Query<TEntity>()
-        {
-            return this.Query<TEntity>(null);
-        }
-        public virtual IQuery<TEntity> Query<TEntity>(string table)
-        {
-            return new Query<TEntity>(this.DbContext, table);
-        }
-
         public JoiningQuery(Query<T1> q1, Query<T2> q2, JoinType joinType, Expression<Func<T1, T2, bool>> on)
         {
             this._dbContext = q1.DbContext;
@@ -55,7 +46,7 @@ namespace SZORM.Query
 
         public IJoiningQuery<T1, T2, T3> Join<T3>(JoinType joinType, Expression<Func<T1, T2, T3, bool>> on)
         {
-            return this.Join<T3>(new Query<T3>(this.DbContext, ""), joinType, on);
+            return this.Join<T3>(new Query<T3>(this.DbContext), joinType, on);
         }
         public IJoiningQuery<T1, T2, T3> Join<T3>(IQuery<T3> q, JoinType joinType, Expression<Func<T1, T2, T3, bool>> on)
         {
@@ -64,19 +55,19 @@ namespace SZORM.Query
 
         public IJoiningQuery<T1, T2, T3> InnerJoin<T3>(Expression<Func<T1, T2, T3, bool>> on)
         {
-            return this.InnerJoin<T3>(Query<T3>(), on);
+            return this.InnerJoin<T3>(new Query<T3>(this.DbContext), on);
         }
         public IJoiningQuery<T1, T2, T3> LeftJoin<T3>(Expression<Func<T1, T2, T3, bool>> on)
         {
-            return this.LeftJoin<T3>(Query<T3>(), on);
+            return this.LeftJoin<T3>(new Query<T3>(this.DbContext), on);
         }
         public IJoiningQuery<T1, T2, T3> RightJoin<T3>(Expression<Func<T1, T2, T3, bool>> on)
         {
-            return this.RightJoin<T3>(Query<T3>(), on);
+            return this.RightJoin<T3>(new Query<T3>(this.DbContext), on);
         }
         public IJoiningQuery<T1, T2, T3> FullJoin<T3>(Expression<Func<T1, T2, T3, bool>> on)
         {
-            return this.FullJoin<T3>(Query<T3>(), on);
+            return this.FullJoin<T3>(new Query<T3>(this.DbContext), on);
         }
 
         public IJoiningQuery<T1, T2, T3> InnerJoin<T3>(IQuery<T3> q, Expression<Func<T1, T2, T3, bool>> on)
@@ -145,17 +136,6 @@ namespace SZORM.Query
         public List<JoiningQueryInfo> JoinedQueries { get { return this._joinedQueries; } }
         public List<LambdaExpression> FilterPredicates { get { return this._filterPredicates; } }
 
-
-        public virtual IQuery<TEntity> Query<TEntity>()
-        {
-            return this.Query<TEntity>(null);
-        }
-        public virtual IQuery<TEntity> Query<TEntity>(string table)
-        {
-            return new Query<TEntity>(this.DbContext, table);
-        }
-
-
         public JoiningQuery(JoiningQuery<T1, T2> joiningQuery, Query<T3> q, JoinType joinType, Expression<Func<T1, T2, T3, bool>> on)
         {
             this._dbContext = joiningQuery.DbContext;
@@ -180,7 +160,7 @@ namespace SZORM.Query
 
         public IJoiningQuery<T1, T2, T3, T4> Join<T4>(JoinType joinType, Expression<Func<T1, T2, T3, T4, bool>> on)
         {
-            return this.Join<T4>(Query<T4>(), joinType, on);
+            return this.Join<T4>(new Query<T4>(this.DbContext), joinType, on);
         }
         public IJoiningQuery<T1, T2, T3, T4> Join<T4>(IQuery<T4> q, JoinType joinType, Expression<Func<T1, T2, T3, T4, bool>> on)
         {
@@ -189,19 +169,19 @@ namespace SZORM.Query
 
         public IJoiningQuery<T1, T2, T3, T4> InnerJoin<T4>(Expression<Func<T1, T2, T3, T4, bool>> on)
         {
-            return this.InnerJoin<T4>(Query<T4>(), on);
+            return this.InnerJoin<T4>(new Query<T4>(this.DbContext), on);
         }
         public IJoiningQuery<T1, T2, T3, T4> LeftJoin<T4>(Expression<Func<T1, T2, T3, T4, bool>> on)
         {
-            return this.LeftJoin<T4>(Query<T4>(), on);
+            return this.LeftJoin<T4>(new Query<T4>(this.DbContext), on);
         }
         public IJoiningQuery<T1, T2, T3, T4> RightJoin<T4>(Expression<Func<T1, T2, T3, T4, bool>> on)
         {
-            return this.RightJoin<T4>(Query<T4>(), on);
+            return this.RightJoin<T4>(new Query<T4>(this.DbContext), on);
         }
         public IJoiningQuery<T1, T2, T3, T4> FullJoin<T4>(Expression<Func<T1, T2, T3, T4, bool>> on)
         {
-            return this.FullJoin<T4>(Query<T4>(), on);
+            return this.FullJoin<T4>(new Query<T4>(this.DbContext), on);
         }
 
         public IJoiningQuery<T1, T2, T3, T4> InnerJoin<T4>(IQuery<T4> q, Expression<Func<T1, T2, T3, T4, bool>> on)
@@ -262,15 +242,6 @@ namespace SZORM.Query
         public List<JoiningQueryInfo> JoinedQueries { get { return this._joinedQueries; } }
         public List<LambdaExpression> FilterPredicates { get { return this._filterPredicates; } }
 
-        public virtual IQuery<TEntity> Query<TEntity>()
-        {
-            return this.Query<TEntity>(null);
-        }
-        public virtual IQuery<TEntity> Query<TEntity>(string table)
-        {
-            return new Query<TEntity>(this.DbContext, table);
-        }
-
         public JoiningQuery(JoiningQuery<T1, T2, T3> joiningQuery, Query<T4> q, JoinType joinType, Expression<Func<T1, T2, T3, T4, bool>> on)
         {
             this._dbContext = joiningQuery.DbContext;
@@ -295,7 +266,7 @@ namespace SZORM.Query
 
         public IJoiningQuery<T1, T2, T3, T4, T5> Join<T5>(JoinType joinType, Expression<Func<T1, T2, T3, T4, T5, bool>> on)
         {
-            return this.Join<T5>(Query<T5>(), joinType, on);
+            return this.Join<T5>(new Query<T5>(this.DbContext), joinType, on);
         }
         public IJoiningQuery<T1, T2, T3, T4, T5> Join<T5>(IQuery<T5> q, JoinType joinType, Expression<Func<T1, T2, T3, T4, T5, bool>> on)
         {
@@ -304,19 +275,19 @@ namespace SZORM.Query
 
         public IJoiningQuery<T1, T2, T3, T4, T5> InnerJoin<T5>(Expression<Func<T1, T2, T3, T4, T5, bool>> on)
         {
-            return this.InnerJoin<T5>(Query<T5>(), on);
+            return this.InnerJoin<T5>(new Query<T5>(this.DbContext), on);
         }
         public IJoiningQuery<T1, T2, T3, T4, T5> LeftJoin<T5>(Expression<Func<T1, T2, T3, T4, T5, bool>> on)
         {
-            return this.LeftJoin<T5>(Query<T5>(), on);
+            return this.LeftJoin<T5>(new Query<T5>(this.DbContext), on);
         }
         public IJoiningQuery<T1, T2, T3, T4, T5> RightJoin<T5>(Expression<Func<T1, T2, T3, T4, T5, bool>> on)
         {
-            return this.RightJoin<T5>(Query<T5>(), on);
+            return this.RightJoin<T5>(new Query<T5>(this.DbContext), on);
         }
         public IJoiningQuery<T1, T2, T3, T4, T5> FullJoin<T5>(Expression<Func<T1, T2, T3, T4, T5, bool>> on)
         {
-            return this.FullJoin<T5>(Query<T5>(), on);
+            return this.FullJoin<T5>(new Query<T5>(this.DbContext), on);
         }
 
         public IJoiningQuery<T1, T2, T3, T4, T5> InnerJoin<T5>(IQuery<T5> q, Expression<Func<T1, T2, T3, T4, T5, bool>> on)

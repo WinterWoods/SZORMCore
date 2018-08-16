@@ -25,7 +25,7 @@ namespace SZORM.Query
 
         Type IQuery.ElementType { get { return typeof(T); } }
 
-        public Query(DbContext dbContext, string explicitTable)
+        public Query(DbContext dbContext, string explicitTable=null)
             : this(dbContext, new RootQueryExpression(typeof(T), explicitTable), false)
         {
 
