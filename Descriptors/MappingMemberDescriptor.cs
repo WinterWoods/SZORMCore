@@ -33,7 +33,7 @@ namespace SZORM.Descriptors
                 columnFlag.Required = true;
             }
             SZColumnAttribute = columnFlag;
-            this.Column = new DbColumn(SZColumnAttribute.FieldName, this.MemberInfoType, columnFlag.DbType, columnFlag.MaxLength);
+            this.Column = new DbColumn(SZColumnAttribute.FieldName, this.MemberInfoType);
         }
 
         public SZColumnAttribute SZColumnAttribute { get; set; }

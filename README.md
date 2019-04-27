@@ -1,4 +1,4 @@
-# SZORMCore
+# SZORM
 .net core框架下的 ORM,支持mssql,mysql,oracle,sqlite
 
 ## 使用方式

@@ -62,7 +62,7 @@ namespace SZORM
                 var path = Directory.GetCurrentDirectory();
                 if (!File.Exists("szorm.json") && !File.Exists("appsettings.json"))
                 {
-                    throw new Exception("没有配置文件szorm.json");
+                    throw new Exception("没有配置文件,可以选择\"szorm.json\"或者\"appsettings.json\"");
                 }
                 if (File.Exists("szorm.json"))
                     builder.AddJsonFile("szorm.json");

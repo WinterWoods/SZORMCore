@@ -9,42 +9,38 @@ namespace SZORM.DbExpressions
     [System.Diagnostics.DebuggerDisplay("Name = {Name}")]
     public class DbColumn
     {
-        string _name;
-        Type _type;
-        DbType? _dbType;
-        int? _size;
-        private DbType? dbType;
-        private int maxLength;
-
         public DbColumn(string name, Type type)
-            : this(name, type, null, null)
+            : this(name, type, null, null, null, null)
         {
         }
-        public DbColumn(string name, Type type, DbType? dbType, int? size)
+        public DbColumn(string name, Type type, DbType? dbType, int? size, byte? scale, byte? precision)
         {
-            this._name = name;
-            this._type = type;
-            this._dbType = dbType;
-            this._size = size;
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentException("Column name could not be null or empty.");
+            }
+
+            this.Name = name;
+            this.Type = type;
+            this.DbType = dbType;
+            this.Size = size;
+            this.Scale = scale;
+            this.Precision = precision;
         }
 
-        public DbColumn(string name, Type type, DbType? dbType, int maxLength) : this(name, type)
-        {
-            this.dbType = dbType;
-            this.maxLength = maxLength;
-        }
-
-        public string Name { get { return this._name; } }
-        public Type Type { get { return this._type; } }
-        public DbType? DbType { get { return this._dbType; } }
-        public int? Size { get { return this._size; } }
+        public string Name { get; private set; }
+        public Type Type { get; private set; }
+        public DbType? DbType { get; private set; }
+        public int? Size { get; private set; }
+        public byte? Scale { get; private set; }
+        public byte? Precision { get; private set; }
 
         public static DbColumn MakeColumn(DbExpression exp, string alias)
         {
             DbColumn column;
             DbColumnAccessExpression e = exp as DbColumnAccessExpression;
             if (e != null)
-                column = new DbColumn(alias, e.Column._type, e.Column._dbType, e.Column._size);
+                column = new DbColumn(alias, e.Column.Type, e.Column.DbType, e.Column.Size, e.Column.Scale, e.Column.Precision);
             else
                 column = new DbColumn(alias, exp.Type);
 

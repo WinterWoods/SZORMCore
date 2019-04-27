@@ -40,7 +40,7 @@ namespace SZORM.Factory.Oracle
 
             return row_numberName;
         }
-        static void AmendDbInfo(DbExpression exp1, DbExpression exp2)
+        public static void AmendDbInfo(DbExpression exp1, DbExpression exp2)
         {
             DbColumnAccessExpression datumPointExp = null;
             DbParameterExpression expToAmend = null;
@@ -65,7 +65,7 @@ namespace SZORM.Factory.Oracle
                     expToAmend.DbType = datumPointExp.Column.DbType;
             }
         }
-        static void AmendDbInfo(DbColumn column, DbExpression exp)
+        public static void AmendDbInfo(DbColumn column, DbExpression exp)
         {
             if (column.DbType == null || exp.NodeType != DbExpressionType.Parameter)
                 return;
@@ -90,17 +90,7 @@ namespace SZORM.Factory.Oracle
 
         static DbExpression EnsureDbExpressionReturnCSharpBoolean(DbExpression exp)
         {
-            if (exp.Type != UtilConstants.TypeOfBoolean && exp.Type != UtilConstants.TypeOfBoolean_Nullable)
-                return exp;
-
-            if (SafeDbExpressionTypes.Contains(exp.NodeType))
-            {
-                return exp;
-            }
-
-            //将且认为不符合上述条件的都是诸如 a.Id>1,a.Name=="name" 等不能作为 bool 返回值的表达式
-            //构建 case when 
-            return ConstructReturnCSharpBooleanCaseWhenExpression(exp);
+            return DbValueExpressionTransformer.Transform(exp);
         }
         public static DbCaseWhenExpression ConstructReturnCSharpBooleanCaseWhenExpression(DbExpression exp)
         {
@@ -133,27 +123,6 @@ namespace SZORM.Factory.Oracle
             items.Push(left);
             return items;
         }
-        static void EnsureMethodDeclaringType(DbMethodCallExpression exp, Type ensureType)
-        {
-            if (exp.Method.DeclaringType != ensureType)
-                throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-        static void EnsureMethodDeclaringType(DbMethodCallExpression exp, params Type[] ensureTypes)
-        {
-            foreach (var type in ensureTypes)
-            {
-                if (exp.Method.DeclaringType == type)
-                    return;
-            }
-
-            throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-        static void EnsureMethod(DbMethodCallExpression exp, MethodInfo methodInfo)
-        {
-            if (exp.Method != methodInfo)
-                throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-
 
         static void EnsureTrimCharArgumentIsSpaces(DbExpression exp)
         {
@@ -203,7 +172,7 @@ namespace SZORM.Factory.Oracle
             return string.Format("Does not support the type '{0}' converted to type '{1}'.", sourceType.FullName, targetType.FullName);
         }
 
-        static void DbFunction_DATEADD(SqlGenerator generator, string interval, DbMethodCallExpression exp)
+        public static void DbFunction_DATEADD(SqlGenerator generator, string interval, DbMethodCallExpression exp)
         {
             /*
              * Just support hour/minute/second
@@ -221,7 +190,7 @@ namespace SZORM.Factory.Oracle
             generator._sqlBuilder.Append("')");
             generator._sqlBuilder.Append(")");
         }
-        static void DbFunction_DATEPART(SqlGenerator generator, string interval, DbExpression exp, bool castToTimestamp = false)
+        public static void DbFunction_DATEPART(SqlGenerator generator, string interval, DbExpression exp, bool castToTimestamp = false)
         {
             /* cast(to_char(sysdate,'yyyy') as number) */
             generator._sqlBuilder.Append("CAST(TO_CHAR(");
@@ -235,29 +204,29 @@ namespace SZORM.Factory.Oracle
             generator._sqlBuilder.Append(interval);
             generator._sqlBuilder.Append("') AS NUMBER)");
         }
-        static void DbFunction_DATEDIFF(SqlGenerator generator, string interval, DbExpression startDateTimeExp, DbExpression endDateTimeExp)
+        public static void DbFunction_DATEDIFF(SqlGenerator generator, string interval, DbExpression startDateTimeExp, DbExpression endDateTimeExp)
         {
             throw new NotSupportedException("DATEDIFF is not supported.");
         }
 
         #region AggregateFunction
-        static void Aggregate_Count(SqlGenerator generator)
+        public static void Aggregate_Count(SqlGenerator generator)
         {
             generator._sqlBuilder.Append("COUNT(1)");
         }
-        static void Aggregate_LongCount(SqlGenerator generator)
+        public static void Aggregate_LongCount(SqlGenerator generator)
         {
             generator._sqlBuilder.Append("COUNT(1)");
         }
-        static void Aggregate_Max(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Max(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "MAX", false);
         }
-        static void Aggregate_Min(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Min(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "MIN", false);
         }
-        static void Aggregate_Sum(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Sum(SqlGenerator generator, DbExpression exp, Type retType)
         {
             if (retType.IsNullable())
             {
@@ -272,7 +241,7 @@ namespace SZORM.Factory.Oracle
                 generator._sqlBuilder.Append(")");
             }
         }
-        static void Aggregate_Average(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Average(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "AVG", false);
         }

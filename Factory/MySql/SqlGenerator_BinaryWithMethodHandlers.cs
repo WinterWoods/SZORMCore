@@ -81,6 +81,5 @@ namespace SZORM.Factory.MySql
 
             generator._sqlBuilder.Append(" END");
         }
-
     }
 }

@@ -31,7 +31,7 @@ namespace SZORM.Factory.SqlServer
 
             return row_numberName;
         }
-        static void AmendDbInfo(DbExpression exp1, DbExpression exp2)
+        public static void AmendDbInfo(DbExpression exp1, DbExpression exp2)
         {
             DbColumnAccessExpression datumPointExp = null;
             DbParameterExpression expToAmend = null;
@@ -56,7 +56,7 @@ namespace SZORM.Factory.SqlServer
                     expToAmend.DbType = datumPointExp.Column.DbType;
             }
         }
-        static void AmendDbInfo(DbColumn column, DbExpression exp)
+        public static void AmendDbInfo(DbColumn column, DbExpression exp)
         {
             if (column.DbType == null || exp.NodeType != DbExpressionType.Parameter)
                 return;
@@ -81,17 +81,7 @@ namespace SZORM.Factory.SqlServer
 
         static DbExpression EnsureDbExpressionReturnCSharpBoolean(DbExpression exp)
         {
-            if (exp.Type != UtilConstants.TypeOfBoolean && exp.Type != UtilConstants.TypeOfBoolean_Nullable)
-                return exp;
-
-            if (SafeDbExpressionTypes.Contains(exp.NodeType))
-            {
-                return exp;
-            }
-
-            //将且认为不符合上述条件的都是诸如 a.Id>1,a.Name=="name" 等不能作为 bool 返回值的表达式
-            //构建 case when 
-            return ConstructReturnCSharpBooleanCaseWhenExpression(exp);
+            return DbValueExpressionTransformer.Transform(exp);
         }
         public static DbCaseWhenExpression ConstructReturnCSharpBooleanCaseWhenExpression(DbExpression exp)
         {
@@ -124,51 +114,7 @@ namespace SZORM.Factory.SqlServer
             items.Push(left);
             return items;
         }
-        static void EnsureMethodDeclaringType(DbMethodCallExpression exp, Type ensureType)
-        {
-            if (exp.Method.DeclaringType != ensureType)
-                throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-        static void EnsureMethodDeclaringType(DbMethodCallExpression exp, params Type[] ensureTypes)
-        {
-            foreach (var type in ensureTypes)
-            {
-                if (exp.Method.DeclaringType == type)
-                    return;
-            }
 
-            throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-        static void EnsureMethod(DbMethodCallExpression exp, MethodInfo methodInfo)
-        {
-            if (exp.Method != methodInfo)
-                throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-
-
-        static void EnsureTrimCharArgumentIsSpaces(DbExpression exp)
-        {
-            var m = exp as DbMemberExpression;
-            if (m == null)
-                throw new NotSupportedException();
-
-            DbParameterExpression p;
-            if (!DbExpressionExtension.TryConvertToParameterExpression(m, out p))
-            {
-                throw new NotSupportedException();
-            }
-
-            var arg = p.Value;
-
-            if (arg == null)
-                throw new NotSupportedException();
-
-            var chars = arg as char[];
-            if (chars.Length != 1 || chars[0] != ' ')
-            {
-                throw new NotSupportedException();
-            }
-        }
         static bool TryGetCastTargetDbTypeString(Type sourceType, Type targetType, out string dbTypeString, bool throwNotSupportedException = true)
         {
             dbTypeString = null;
@@ -206,7 +152,7 @@ namespace SZORM.Factory.SqlServer
             return string.Format("Does not support the type '{0}' converted to type '{1}'.", sourceType.FullName, targetType.FullName);
         }
 
-        static void DbFunction_DATEADD(SqlGenerator generator, string interval, DbMethodCallExpression exp)
+        public static void DbFunction_DATEADD(SqlGenerator generator, string interval, DbMethodCallExpression exp)
         {
             generator._sqlBuilder.Append("DATEADD(");
             generator._sqlBuilder.Append(interval);
@@ -216,7 +162,7 @@ namespace SZORM.Factory.SqlServer
             exp.Object.Accept(generator);
             generator._sqlBuilder.Append(")");
         }
-        static void DbFunction_DATEPART(SqlGenerator generator, string interval, DbExpression exp)
+        public static void DbFunction_DATEPART(SqlGenerator generator, string interval, DbExpression exp)
         {
             generator._sqlBuilder.Append("DATEPART(");
             generator._sqlBuilder.Append(interval);
@@ -224,7 +170,7 @@ namespace SZORM.Factory.SqlServer
             exp.Accept(generator);
             generator._sqlBuilder.Append(")");
         }
-        static void DbFunction_DATEDIFF(SqlGenerator generator, string interval, DbExpression startDateTimeExp, DbExpression endDateTimeExp)
+        public static void DbFunction_DATEDIFF(SqlGenerator generator, string interval, DbExpression startDateTimeExp, DbExpression endDateTimeExp)
         {
             generator._sqlBuilder.Append("DATEDIFF(");
             generator._sqlBuilder.Append(interval);
@@ -236,23 +182,23 @@ namespace SZORM.Factory.SqlServer
         }
 
         #region AggregateFunction
-        static void Aggregate_Count(SqlGenerator generator)
+        public static void Aggregate_Count(SqlGenerator generator)
         {
             generator._sqlBuilder.Append("COUNT(1)");
         }
-        static void Aggregate_LongCount(SqlGenerator generator)
+        public static void Aggregate_LongCount(SqlGenerator generator)
         {
             generator._sqlBuilder.Append("COUNT_BIG(1)");
         }
-        static void Aggregate_Max(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Max(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "MAX", false);
         }
-        static void Aggregate_Min(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Min(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "MIN", false);
         }
-        static void Aggregate_Sum(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Sum(SqlGenerator generator, DbExpression exp, Type retType)
         {
             if (retType.IsNullable())
             {
@@ -267,7 +213,7 @@ namespace SZORM.Factory.SqlServer
                 generator._sqlBuilder.Append(")");
             }
         }
-        static void Aggregate_Average(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Average(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "AVG", true);
         }
@@ -293,7 +239,6 @@ namespace SZORM.Factory.SqlServer
                 generator._sqlBuilder.Append(" AS ", dbTypeString, ")");
             }
         }
-
         #endregion
 
     }

@@ -19,7 +19,7 @@ namespace SZORM.Factory.SqlServer
             aggregateHandlers.Add("Min", Aggregate_Min);
             aggregateHandlers.Add("Average", Aggregate_Average);
 
-            var ret = Utils.Clone(aggregateHandlers, StringComparer.Ordinal);
+            var ret = Utils.Clone(aggregateHandlers);
             return ret;
         }
 

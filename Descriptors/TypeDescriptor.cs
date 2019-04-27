@@ -21,8 +21,8 @@ namespace SZORM.Descriptors
     /// </summary>
     public class TypeDescriptors
     {
-       
-        static readonly ConcurrentDictionary<Type, List<Type>> InstanceCache = new ConcurrentDictionary<Type, List<Type>>();
+        static object objectLock = new object();
+        public static readonly ConcurrentDictionary<Type, ConcurrentDictionary<Type, TypeDescriptor>> InstanceCache = new ConcurrentDictionary<Type, ConcurrentDictionary<Type, TypeDescriptor>>();
         //如果初始化多个链接,要进行多次缓存
         public static ConcurrentDictionary<Type,TypeDescriptor> GetTypeDescriptors(DbContext dbContext)
         {
@@ -30,31 +30,37 @@ namespace SZORM.Descriptors
             //必须是从我的基类继承过来的才可以
             if (type.BaseType.FullName != "SZORM.DbContext") throw new SZORMException("必须继承SZORM.DbContext");
             ConcurrentDictionary<Type,TypeDescriptor> result=new ConcurrentDictionary<Type, TypeDescriptor>();
-            List<Type> types=null;
-            if (!InstanceCache.TryGetValue(type,out types))
+            lock(objectLock)
             {
-                types = new List<Type>();
-                ConcurrentDictionary<Type, TypeDescriptor> _result = new ConcurrentDictionary<Type, TypeDescriptor>();
-                var properties = type.GetProperties();
-                foreach (var item in properties)
+                if (!InstanceCache.TryGetValue(type, out result))
                 {
-                    Type _tmp = item.PropertyType.GetGenericArguments()[0];
-                    TypeDescriptor instance = new TypeDescriptor(_tmp, item, type.GetMember(item.Name)[0]);
+                    ConcurrentDictionary<Type, TypeDescriptor> _result = new ConcurrentDictionary<Type, TypeDescriptor>();
+                    var properties = type.GetProperties();
+                    foreach (var item in properties)
+                    {
+                        Type _tmp = item.PropertyType.GetGenericArguments()[0];
+                        TypeDescriptor instance = new TypeDescriptor(_tmp, item, type.GetMember(item.Name)[0]);
 
-                    _result.TryAdd(_tmp, instance);
-                    types.Add(_tmp);
+                        //object obj = Assembly.GetAssembly(instance.PropertyInfo.PropertyType).CreateInstance(instance.PropertyInfo.PropertyType.FullName);
+                        //SetValue(dbContext, obj, instance.MemberInfo);
+                        //SetDbContextValue(dbContext, obj, instance.DbContextMemberInfo);
+
+                        _result.TryAdd(_tmp, instance);
+                    }
+                    InstanceCache.TryAdd(type, _result);
+                    result = _result;
                 }
-                result = _result;
             }
-            foreach (var item in types)
+
+            foreach (var item in result)
             {
-                var typeDesc = TypeDescriptor.GetDescriptor(item);
+                var typeDesc = item.Value;
                 object obj = Assembly.GetAssembly(typeDesc.PropertyInfo.PropertyType).CreateInstance(typeDesc.PropertyInfo.PropertyType.FullName);
-                SetValue(dbContext,obj, typeDesc.MemberInfo);
+                SetValue(dbContext, obj, typeDesc.MemberInfo);
                 SetDbContextValue(dbContext, obj, typeDesc.DbContextMemberInfo);
-                result.TryAdd(item,typeDesc);
+                result.TryAdd(item.Key, typeDesc);
             }
-            return result;
+                return result;
         }
         public static TypeDescriptor GetTypeDescriptor(DbContext  dbContext ,Type type)
         {
@@ -268,14 +274,13 @@ namespace SZORM.Descriptors
 
         static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, TypeDescriptor> InstanceCache = new System.Collections.Concurrent.ConcurrentDictionary<Type, TypeDescriptor>();
 
-        public static TypeDescriptor GetDescriptor(Type type)
+        public static TypeDescriptor GetDescriptor(Type PropertyType)
         {
             TypeDescriptor instance;
-            if (!InstanceCache.TryGetValue(type, out instance))
+            if (!InstanceCache.TryGetValue(PropertyType, out instance))
             {
-                throw new Exception("没有缓存,错误.");
+                throw new Exception("没有缓存PropertyType,错误.");
             }
-
             return instance;
         }
     }

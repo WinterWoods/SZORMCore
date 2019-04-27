@@ -19,7 +19,7 @@ namespace SZORM.Factory.MySql
 
             return UtilConstants.ParameterNamePrefix + ordinal.ToString();
         }
-        static void AmendDbInfo(DbExpression exp1, DbExpression exp2)
+        public static void AmendDbInfo(DbExpression exp1, DbExpression exp2)
         {
             DbColumnAccessExpression datumPointExp = null;
             DbParameterExpression expToAmend = null;
@@ -85,51 +85,7 @@ namespace SZORM.Factory.MySql
             items.Push(left);
             return items;
         }
-        static void EnsureMethodDeclaringType(DbMethodCallExpression exp, Type ensureType)
-        {
-            if (exp.Method.DeclaringType != ensureType)
-                throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-        static void EnsureMethodDeclaringType(DbMethodCallExpression exp, params Type[] ensureTypes)
-        {
-            foreach (var type in ensureTypes)
-            {
-                if (exp.Method.DeclaringType == type)
-                    return;
-            }
 
-            throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-        static void EnsureMethod(DbMethodCallExpression exp, MethodInfo methodInfo)
-        {
-            if (exp.Method != methodInfo)
-                throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-
-
-        static void EnsureTrimCharArgumentIsSpaces(DbExpression exp)
-        {
-            var m = exp as DbMemberExpression;
-            if (m == null)
-                throw new NotSupportedException();
-
-            DbParameterExpression p;
-            if (!DbExpressionExtension.TryConvertToParameterExpression(m, out p))
-            {
-                throw new NotSupportedException();
-            }
-
-            var arg = p.Value;
-
-            if (arg == null)
-                throw new NotSupportedException();
-
-            var chars = arg as char[];
-            if (chars.Length != 1 || chars[0] != ' ')
-            {
-                throw new NotSupportedException();
-            }
-        }
         static bool TryGetCastTargetDbTypeString(Type sourceType, Type targetType, out string dbTypeString, bool throwNotSupportedException = true)
         {
             dbTypeString = null;
@@ -155,7 +111,7 @@ namespace SZORM.Factory.MySql
             return string.Format("Does not support the type '{0}' converted to type '{1}'.", sourceType.FullName, targetType.FullName);
         }
 
-        static void DbFunction_DATEADD(SqlGenerator generator, string interval, DbMethodCallExpression exp)
+        public static void DbFunction_DATEADD(SqlGenerator generator, string interval, DbMethodCallExpression exp)
         {
             //DATE_ADD(now(),INTERVAL 1 day),DATE_ADD(now(),INTERVAL 10 MINUTE)
             generator._sqlBuilder.Append("DATE_ADD(");
@@ -165,14 +121,14 @@ namespace SZORM.Factory.MySql
             generator._sqlBuilder.Append(" ", interval);
             generator._sqlBuilder.Append(")");
         }
-        static void DbFunction_DATEPART(SqlGenerator generator, string functionName, DbExpression exp)
+        public static void DbFunction_DATEPART(SqlGenerator generator, string functionName, DbExpression exp)
         {
             generator._sqlBuilder.Append(functionName);
             generator._sqlBuilder.Append("(");
             exp.Accept(generator);
             generator._sqlBuilder.Append(")");
         }
-        static void DbFunction_DATEDIFF(SqlGenerator generator, string interval, DbExpression startDateTimeExp, DbExpression endDateTimeExp)
+        public static void DbFunction_DATEDIFF(SqlGenerator generator, string interval, DbExpression startDateTimeExp, DbExpression endDateTimeExp)
         {
             //TIMESTAMPDIFF(HOUR,'2003-02-01 11:00','2003-02-01 12:00');
             generator._sqlBuilder.Append("TIMESTAMPDIFF(");
@@ -185,23 +141,23 @@ namespace SZORM.Factory.MySql
         }
 
         #region AggregateFunction
-        static void Aggregate_Count(SqlGenerator generator)
+        public static void Aggregate_Count(SqlGenerator generator)
         {
             generator._sqlBuilder.Append("COUNT(1)");
         }
-        static void Aggregate_LongCount(SqlGenerator generator)
+        public static void Aggregate_LongCount(SqlGenerator generator)
         {
             generator._sqlBuilder.Append("COUNT(1)");
         }
-        static void Aggregate_Max(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Max(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "MAX", false);
         }
-        static void Aggregate_Min(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Min(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "MIN", false);
         }
-        static void Aggregate_Sum(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Sum(SqlGenerator generator, DbExpression exp, Type retType)
         {
             if (retType.IsNullable())
             {
@@ -216,7 +172,7 @@ namespace SZORM.Factory.MySql
                 generator._sqlBuilder.Append(")");
             }
         }
-        static void Aggregate_Average(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Average(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "AVG", true);
         }

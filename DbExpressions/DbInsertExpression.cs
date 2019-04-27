@@ -21,6 +21,7 @@ namespace SZORM.DbExpressions
 
         public DbTable Table { get { return this._table; } }
         public Dictionary<DbColumn, DbExpression> InsertColumns { get { return this._insertColumns; } }
+        public List<DbColumn> Returns { get; private set; } = new List<DbColumn>();
         public override T Accept<T>(DbExpressionVisitor<T> visitor)
         {
             return visitor.Visit(this);

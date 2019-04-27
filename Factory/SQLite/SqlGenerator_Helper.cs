@@ -19,7 +19,7 @@ namespace SZORM.Factory.SQLite
 
             return UtilConstants.ParameterNamePrefix + ordinal.ToString();
         }
-        static void AmendDbInfo(DbExpression exp1, DbExpression exp2)
+        public static void AmendDbInfo(DbExpression exp1, DbExpression exp2)
         {
             DbColumnAccessExpression datumPointExp = null;
             DbParameterExpression expToAmend = null;
@@ -44,7 +44,7 @@ namespace SZORM.Factory.SQLite
                     expToAmend.DbType = datumPointExp.Column.DbType;
             }
         }
-        static void AmendDbInfo(DbColumn column, DbExpression exp)
+        public static void AmendDbInfo(DbColumn column, DbExpression exp)
         {
             if (column.DbType == null || exp.NodeType != DbExpressionType.Parameter)
                 return;
@@ -85,27 +85,6 @@ namespace SZORM.Factory.SQLite
             items.Push(left);
             return items;
         }
-        static void EnsureMethodDeclaringType(DbMethodCallExpression exp, Type ensureType)
-        {
-            if (exp.Method.DeclaringType != ensureType)
-                throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-        static void EnsureMethodDeclaringType(DbMethodCallExpression exp, params Type[] ensureTypes)
-        {
-            foreach (var type in ensureTypes)
-            {
-                if (exp.Method.DeclaringType == type)
-                    return;
-            }
-
-            throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-        static void EnsureMethod(DbMethodCallExpression exp, MethodInfo methodInfo)
-        {
-            if (exp.Method != methodInfo)
-                throw UtilExceptions.NotSupportedMethod(exp.Method);
-        }
-
 
         static void EnsureTrimCharArgumentIsSpaces(DbExpression exp)
         {
@@ -155,7 +134,7 @@ namespace SZORM.Factory.SQLite
             return string.Format("Does not support the type '{0}' converted to type '{1}'.", sourceType.FullName, targetType.FullName);
         }
 
-        static void DbFunction_DATEADD(SqlGenerator generator, string interval, DbMethodCallExpression exp)
+        public static void DbFunction_DATEADD(SqlGenerator generator, string interval, DbMethodCallExpression exp)
         {
             /* DATETIME(@P_0,'+' || 1 || ' years') */
 
@@ -166,7 +145,7 @@ namespace SZORM.Factory.SQLite
             generator._sqlBuilder.Append(" || ' ", interval, "'");
             generator._sqlBuilder.Append(")");
         }
-        static void DbFunction_DATEPART(SqlGenerator generator, string interval, DbExpression exp)
+        public static void DbFunction_DATEPART(SqlGenerator generator, string interval, DbExpression exp)
         {
             /* CAST(STRFTIME('%M','2016-08-06 09:01:24') AS INTEGER) */
             generator._sqlBuilder.Append("CAST(");
@@ -176,24 +155,67 @@ namespace SZORM.Factory.SQLite
             generator._sqlBuilder.Append(" AS INTEGER)");
         }
 
+        static void Append_JULIANDAY(SqlGenerator generator, DbExpression startDateTimeExp, DbExpression endDateTimeExp)
+        {
+            /* (JULIANDAY(endDateTimeExp)- JULIANDAY(startDateTimeExp)) */
+
+            generator._sqlBuilder.Append("(");
+
+            generator._sqlBuilder.Append("JULIANDAY(");
+            endDateTimeExp.Accept(generator);
+            generator._sqlBuilder.Append(")");
+
+            generator._sqlBuilder.Append(" - ");
+
+            generator._sqlBuilder.Append("JULIANDAY(");
+            startDateTimeExp.Accept(generator);
+            generator._sqlBuilder.Append(")");
+
+            generator._sqlBuilder.Append(")");
+        }
+        public static void Append_DiffYears(SqlGenerator generator, DbExpression startDateTimeExp, DbExpression endDateTimeExp)
+        {
+            /* (CAST(STRFTIME('%Y',endDateTimeExp) as INTEGER) - CAST(STRFTIME('%Y',startDateTimeExp) as INTEGER)) */
+
+            generator._sqlBuilder.Append("(");
+            DbFunction_DATEPART(generator, "Y", endDateTimeExp);
+            generator._sqlBuilder.Append(" - ");
+            DbFunction_DATEPART(generator, "Y", startDateTimeExp);
+            generator._sqlBuilder.Append(")");
+        }
+        public static void Append_DateDiff(SqlGenerator generator, DbExpression startDateTimeExp, DbExpression endDateTimeExp, int? multiplier)
+        {
+            /* CAST((JULIANDAY(endDateTimeExp)- JULIANDAY(startDateTimeExp)) AS INTEGER) */
+            /* OR */
+            /* CAST((JULIANDAY(endDateTimeExp)- JULIANDAY(startDateTimeExp)) * multiplier AS INTEGER) */
+
+            generator._sqlBuilder.Append("CAST(");
+
+            Append_JULIANDAY(generator, startDateTimeExp, endDateTimeExp);
+            if (multiplier != null)
+                generator._sqlBuilder.Append(" * ", multiplier.Value.ToString());
+
+            generator._sqlBuilder.Append(" AS INTEGER)");
+        }
+
         #region AggregateFunction
-        static void Aggregate_Count(SqlGenerator generator)
+        public static void Aggregate_Count(SqlGenerator generator)
         {
             generator._sqlBuilder.Append("COUNT(1)");
         }
-        static void Aggregate_LongCount(SqlGenerator generator)
+        public static void Aggregate_LongCount(SqlGenerator generator)
         {
             generator._sqlBuilder.Append("COUNT(1)");
         }
-        static void Aggregate_Max(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Max(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "MAX", false);
         }
-        static void Aggregate_Min(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Min(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "MIN", false);
         }
-        static void Aggregate_Sum(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Sum(SqlGenerator generator, DbExpression exp, Type retType)
         {
             if (retType.IsNullable())
             {
@@ -208,7 +230,7 @@ namespace SZORM.Factory.SQLite
                 generator._sqlBuilder.Append(")");
             }
         }
-        static void Aggregate_Average(SqlGenerator generator, DbExpression exp, Type retType)
+        public static void Aggregate_Average(SqlGenerator generator, DbExpression exp, Type retType)
         {
             AppendAggregateFunction(generator, exp, retType, "AVG", true);
         }

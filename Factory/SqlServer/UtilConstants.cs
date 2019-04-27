@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -19,6 +20,8 @@ namespace SZORM.Factory.SqlServer
             MethodInfo method_Enumerable_Contains = (e.Body as MethodCallExpression).Method.GetGenericMethodDefinition();
             MethodInfo_Enumerable_Contains = method_Enumerable_Contains;
         }
+
+        public static readonly Type TypeOfTimestamp = typeof(TimestampAttribute);
 
         public static readonly Type TypeOfVoid = typeof(void);
         public static readonly Type TypeOfInt16 = typeof(Int16);
@@ -89,6 +92,7 @@ namespace SZORM.Factory.SqlServer
         /* Sql */
         public static readonly MethodInfo MethodInfo_Sql_Equals = typeof(Sql).GetMethods().Where(a => a.Name == "Equals" && a.IsStatic && a.IsGenericMethod).First();
         public static readonly MethodInfo MethodInfo_Sql_NotEquals = typeof(Sql).GetMethod("NotEquals");
+        public static readonly MethodInfo MethodInfo_Sql_NextValueForSequence = typeof(Sql).GetMethod("NextValueForSequence");
         #endregion
 
     }

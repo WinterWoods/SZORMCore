@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using SZORM.Core.Visitors;
 using SZORM.DbExpressions;
 using SZORM.Extensions;
 using SZORM.Utility;
@@ -12,14 +13,14 @@ namespace SZORM.Factory.SQLite
 {
     partial class SqlGenerator : DbExpressionVisitor<DbExpression>
     {
-        internal ISqlBuilder _sqlBuilder = new SqlBuilder();
+        ISqlBuilder _sqlBuilder = new SqlBuilder();
         DbParamCollection _parameters = new DbParamCollection();
 
-        static readonly Dictionary<string, Action<DbMethodCallExpression, SqlGenerator>> MethodHandlers = InitMethodHandlers();
+        public static readonly Dictionary<string, IMethodHandler> MethodHandlers = GetMethodHandlers();
         static readonly Dictionary<string, Action<DbAggregateExpression, SqlGenerator>> AggregateHandlers = InitAggregateHandlers();
         static readonly Dictionary<MethodInfo, Action<DbBinaryExpression, SqlGenerator>> BinaryWithMethodHandlers = InitBinaryWithMethodHandlers();
-        static readonly Dictionary<Type, string> CastTypeMap;
-        static readonly Dictionary<Type, Type> NumericTypes;
+        public static readonly Dictionary<Type, string> CastTypeMap;
+        public static readonly Dictionary<Type, Type> NumericTypes;
         static readonly List<string> CacheParameterNames;
 
         static SqlGenerator()
@@ -78,8 +79,8 @@ namespace SZORM.Factory.SQLite
             DbExpression left = exp.Left;
             DbExpression right = exp.Right;
 
-            left = DbExpressionHelper.OptimizeDbExpression(left);
-            right = DbExpressionHelper.OptimizeDbExpression(right);
+            left = DbExpressionExtension.StripInvalidConvert(left);
+            right = DbExpressionExtension.StripInvalidConvert(right);
 
             MethodInfo method_Sql_Equals = UtilConstants.MethodInfo_Sql_Equals.MakeGenericMethod(left.Type);
 
@@ -123,8 +124,8 @@ namespace SZORM.Factory.SQLite
             DbExpression left = exp.Left;
             DbExpression right = exp.Right;
 
-            left = DbExpressionHelper.OptimizeDbExpression(left);
-            right = DbExpressionHelper.OptimizeDbExpression(right);
+            left = DbExpressionExtension.StripInvalidConvert(left);
+            right = DbExpressionExtension.StripInvalidConvert(right);
 
             MethodInfo method_Sql_NotEquals = UtilConstants.MethodInfo_Sql_NotEquals.MakeGenericMethod(left.Type);
 
@@ -381,8 +382,7 @@ namespace SZORM.Factory.SQLite
 
         public override DbExpression Visit(DbTableExpression exp)
         {
-            this.QuoteName(exp.Table.Name);
-
+            this.AppendTable(exp.Table);
             return exp;
         }
         public override DbExpression Visit(DbColumnAccessExpression exp)
@@ -442,7 +442,7 @@ namespace SZORM.Factory.SQLite
         public override DbExpression Visit(DbInsertExpression exp)
         {
             this._sqlBuilder.Append("INSERT INTO ");
-            this.QuoteName(exp.Table.Name);
+            this.AppendTable(exp.Table);
             this._sqlBuilder.Append("(");
 
             bool first = true;
@@ -471,7 +471,7 @@ namespace SZORM.Factory.SQLite
                     this._sqlBuilder.Append(",");
                 }
 
-                DbExpression valExp = item.Value.OptimizeDbExpression();
+                DbExpression valExp = item.Value.StripInvalidConvert();
                 AmendDbInfo(item.Key, valExp);
                 valExp.Accept(this);
             }
@@ -483,7 +483,7 @@ namespace SZORM.Factory.SQLite
         public override DbExpression Visit(DbUpdateExpression exp)
         {
             this._sqlBuilder.Append("UPDATE ");
-            this.QuoteName(exp.Table.Name);
+            this.AppendTable(exp.Table);
             this._sqlBuilder.Append(" SET ");
 
             bool first = true;
@@ -497,7 +497,7 @@ namespace SZORM.Factory.SQLite
                 this.QuoteName(item.Key.Name);
                 this._sqlBuilder.Append("=");
 
-                DbExpression valExp = item.Value.OptimizeDbExpression();
+                DbExpression valExp = item.Value.StripInvalidConvert();
                 AmendDbInfo(item.Key, valExp);
                 valExp.Accept(this);
             }
@@ -509,7 +509,7 @@ namespace SZORM.Factory.SQLite
         public override DbExpression Visit(DbDeleteExpression exp)
         {
             this._sqlBuilder.Append("DELETE FROM ");
-            this.QuoteName(exp.Table.Name);
+            this.AppendTable(exp.Table);
             this.BuildWhereState(exp.Condition);
 
             return exp;
@@ -602,14 +602,23 @@ namespace SZORM.Factory.SQLite
 
         public override DbExpression Visit(DbMethodCallExpression exp)
         {
-            Action<DbMethodCallExpression, SqlGenerator> methodHandler;
-            if (!MethodHandlers.TryGetValue(exp.Method.Name, out methodHandler))
+            IMethodHandler methodHandler;
+            if (MethodHandlers.TryGetValue(exp.Method.Name, out methodHandler))
             {
-                throw UtilExceptions.NotSupportedMethod(exp.Method);
+                if (methodHandler.CanProcess(exp))
+                {
+                    methodHandler.Process(exp, this);
+                    return exp;
+                }
             }
 
-            methodHandler(exp, this);
-            return exp;
+            if (exp.IsEvaluable())
+            {
+                DbParameterExpression dbParameter = new DbParameterExpression(exp.Evaluate(), exp.Type);
+                return dbParameter.Accept(this);
+            }
+
+            throw UtilExceptions.NotSupportedMethod(exp.Method);
         }
         public override DbExpression Visit(DbMemberExpression exp)
         {
@@ -649,13 +658,6 @@ namespace SZORM.Factory.SQLite
                 }
             }
 
-
-            DbParameterExpression newExp;
-            if (DbExpressionExtension.TryConvertToParameterExpression(exp, out newExp))
-            {
-                return newExp.Accept(this);
-            }
-
             if (member.Name == "Length" && member.DeclaringType == UtilConstants.TypeOfString)
             {
                 this._sqlBuilder.Append("LENGTH(");
@@ -664,10 +666,17 @@ namespace SZORM.Factory.SQLite
 
                 return exp;
             }
-            else if (member.Name == "Value" && ReflectionExtension.IsNullable(exp.Expression.Type))
+
+            if (member.Name == "Value" && ReflectionExtension.IsNullable(exp.Expression.Type))
             {
                 exp.Expression.Accept(this);
                 return exp;
+            }
+
+            DbParameterExpression newExp;
+            if (DbExpressionExtension.TryConvertToParameterExpression(exp, out newExp))
+            {
+                return newExp.Accept(this);
             }
 
             throw new NotSupportedException(string.Format("'{0}.{1}' is not supported.", member.DeclaringType.FullName, member.Name));
@@ -896,6 +905,10 @@ namespace SZORM.Factory.SQLite
                 throw new ArgumentException("name");
 
             this._sqlBuilder.Append("[", name, "]");
+        }
+        void AppendTable(DbTable table)
+        {
+            this.QuoteName(table.Name);
         }
 
         void BuildCastState(DbExpression castExp, string targetDbTypeString)

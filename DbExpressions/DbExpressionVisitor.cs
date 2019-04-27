@@ -187,6 +187,8 @@ namespace SZORM.DbExpressions
                 ret.InsertColumns.Add(kv.Key, this.MakeNewExpression(kv.Value));
             }
 
+            ret.Returns.AddRange(exp.Returns);
+
             return ret;
         }
         public override DbExpression Visit(DbUpdateExpression exp)
@@ -197,6 +199,8 @@ namespace SZORM.DbExpressions
             {
                 ret.UpdateColumns.Add(kv.Key, this.MakeNewExpression(kv.Value));
             }
+
+            ret.Returns.AddRange(exp.Returns);
 
             return ret;
         }

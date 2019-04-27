@@ -30,6 +30,10 @@ namespace SZORM.Factory
             {
                 return new SqlServer.SqlServerDatabaseProvider();
             }
+            else if (DatabaseType.ToLower() == "PostgreSQL".ToLower())
+            {
+                return new PostgreSQL.PostgreSQLDatabaseProvider();
+            }
             else
             {
                 if (dbDatabaseProvider != null)

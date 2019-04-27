@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using SZORM.DbExpressions;
+using SZORM.Core.Visitors;
 
 namespace SZORM.Extensions
 {
@@ -24,51 +25,68 @@ namespace SZORM.Extensions
 
             DbConvertExpression convertExpression = (DbConvertExpression)exp;
 
+            if (convertExpression.Type == convertExpression.Operand.Type)
+            {
+                return StripInvalidConvert(convertExpression.Operand);
+            }
+
+            //(enumType)1
             if (convertExpression.Type.IsEnum)
             {
-                //(enumType)123
-                if (typeof(int) == convertExpression.Operand.Type)
+                Type enumUnderlyingType = Enum.GetUnderlyingType(convertExpression.Type);
+                if (enumUnderlyingType == convertExpression.Operand.Type)
+                {
+                    //(enumType)1 --> 1
                     return StripInvalidConvert(convertExpression.Operand);
+                }
 
-                DbConvertExpression newExp = new DbConvertExpression(typeof(int), convertExpression.Operand);
+                //(enumType)1 --> (Int16/Int32/Int64)1
+                DbConvertExpression newExp = new DbConvertExpression(enumUnderlyingType, convertExpression.Operand);
                 return StripInvalidConvert(newExp);
             }
 
             Type underlyingType;
 
-            //(int?)123
-            if (ReflectionExtension.IsNullable(convertExpression.Type, out underlyingType))//可空类型转换
+            //(Nullable<T>)1
+            if (convertExpression.Type.IsNullable(out underlyingType))//可空类型转换
             {
                 if (underlyingType == convertExpression.Operand.Type)
+                {
+                    //T == convertExpression.Operand.Type
+                    //(Nullable<T>)1 --> 1
                     return StripInvalidConvert(convertExpression.Operand);
+                }
 
+                //(Nullable<T>)1 --> (T)1
                 DbConvertExpression newExp = new DbConvertExpression(underlyingType, convertExpression.Operand);
                 return StripInvalidConvert(newExp);
             }
 
-            //(int)enumTypeValue
-            if (exp.Type == typeof(int))
+            if (!exp.Type.IsEnum)
             {
-                //(int)enumTypeValue
+                //(Int16/Int32/Int64)TEnum
                 if (convertExpression.Operand.Type.IsEnum)
+                {
+                    //(Int16/Int32/Int64)TEnum --> TEnum
                     return StripInvalidConvert(convertExpression.Operand);
+                }
 
-                //(int)NullableEnumTypeValue
-                if (ReflectionExtension.IsNullable(convertExpression.Operand.Type, out underlyingType) && underlyingType.IsEnum)
+                //(Int16/Int32/Int64)Nullable<TEnum>
+                if (convertExpression.Operand.Type.IsNullable(out underlyingType) && underlyingType.IsEnum)
+                {
+                    //(Int16/Int32/Int64)Nullable<TEnum> --> TEnum
                     return StripInvalidConvert(convertExpression.Operand);
+                }
             }
 
             //float long double and so on
             if (exp.Type.IsValueType)
             {
-                //(long)NullableValue
-                if (ReflectionExtension.IsNullable(convertExpression.Operand.Type, out underlyingType) && underlyingType == exp.Type)
+                if (convertExpression.Operand.Type.IsNullable(out underlyingType) && underlyingType == exp.Type)
+                {
+                    //(T)Nullable<T> --> T
                     return StripInvalidConvert(convertExpression.Operand);
-            }
-
-            if (convertExpression.Type == convertExpression.Operand.Type)
-            {
-                return StripInvalidConvert(convertExpression.Operand);
+                }
             }
 
             //如果是子类向父类转换
@@ -95,29 +113,6 @@ namespace SZORM.Extensions
             val = exp.ConvertToParameterExpression();
             return true;
         }
-
-        public static bool IsEvaluable(this DbMemberExpression memberExpression)
-        {
-            if (memberExpression == null)
-                throw new ArgumentNullException("memberExpression");
-
-            do
-            {
-                DbExpression prevExp = memberExpression.Expression;
-
-                // prevExp == null 表示是静态成员
-                if (prevExp == null || prevExp is DbConstantExpression)
-                    return true;
-
-                DbMemberExpression memberExp = prevExp as DbMemberExpression;
-                if (memberExp == null)
-                    return false;
-                else
-                    memberExpression = memberExp;
-
-            } while (true);
-        }
-
         /// <summary>
         /// 对 memberExpression 进行求值
         /// </summary>
@@ -125,14 +120,20 @@ namespace SZORM.Extensions
         /// <returns>返回 DbParameterExpression</returns>
         public static DbParameterExpression ConvertToParameterExpression(this DbMemberExpression memberExpression)
         {
-            DbParameterExpression ret = null;
             //求值
             object val = Evaluate(memberExpression);
-
-            ret = DbExpression.Parameter(val, memberExpression.Type);
-
-            return ret;
+            return DbExpression.Parameter(val, memberExpression.Type);
         }
+
+        public static bool IsEvaluable(this DbExpression expression)
+        {
+            return DbExpressionEvaluableJudge.CanEvaluate(expression);
+        }
+        public static object Evaluate(this DbExpression exp)
+        {
+            return DbExpressionEvaluator.Evaluate(exp);
+        }
+
 
         /// <summary>
         /// 判定 exp 返回值肯定是 null
@@ -179,49 +180,6 @@ namespace SZORM.Extensions
             }
 
             return false;
-        }
-
-        public static object Evaluate(this DbMemberExpression exp, object instance)
-        {
-            if (exp.Member.MemberType
-              == MemberTypes.Field)
-            {
-                return ((FieldInfo)exp.Member).GetValue(instance);
-            }
-            else if (exp.Member.MemberType
-                     == MemberTypes.Property)
-            {
-                return ((PropertyInfo)exp.Member).GetValue(instance, null);
-            }
-
-            throw new NotSupportedException();
-        }
-        public static object Evaluate(this DbExpression exp)
-        {
-            if (exp.NodeType == DbExpressionType.Constant)
-                return ((DbConstantExpression)exp).Value;
-
-            if (exp.NodeType == DbExpressionType.MemberAccess)
-            {
-                DbMemberExpression m = (DbMemberExpression)exp;
-                object instance = null;
-                if (m.Expression != null)
-                {
-                    instance = Evaluate(m.Expression);
-
-                    /* 非静态成员，需要检查是否为空引用。Nullable<T>.HasValue 的情况比较特俗，暂不考虑 */
-                    Type declaringType = m.Member.DeclaringType;
-                    if (declaringType.IsClass || declaringType.IsInterface)
-                    {
-                        if (instance == null)
-                            throw new NullReferenceException(string.Format("There is an object reference not set to an instance of an object in expression tree.The type of null object is '{0}'.", declaringType.FullName));
-                    }
-                }
-
-                return Evaluate(m, instance);
-            }
-
-            throw new NotSupportedException();
         }
     }
 }

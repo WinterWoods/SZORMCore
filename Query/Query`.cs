@@ -323,7 +323,7 @@ namespace SZORM.Query
             return iterator.Single();
         }
         /// <summary>
-        /// 类<see cref="Chloe.Query.Visitors.GeneralExpressionVisitor"/>有引用该方法[反射]
+        /// 类<see cref="SZORM.Factory.Query.Visitors.GeneralExpressionVisitor"/>有引用该方法[反射]
         /// </summary>
         /// <typeparam name="TResult"></typeparam>
         /// <param name="method"></param>
