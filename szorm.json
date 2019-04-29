@@ -1,5 +1,5 @@
 {
-  "DB": {
+  "DB123": {
     "type": "MySql",
     "connStr": "Database='test';Data Source='127.0.0.1';User Id='root';Password='sz06181102';charset='utf8mb4';pooling=false"
   },
@@ -14,6 +14,9 @@
   "DB3": {
     "type": "SqlServer",
     "connStr": "Data Source=127.0.0.1,1433;Initial Catalog=test;User ID=yy;Password=yy;"
-  }
-
+  },
+  "DB": {
+    "type": "PostgreSQL",
+    "connStr": "User ID=postgres;Password=sz06181102;Host=localhost;Port=5432;Database=postgres;Pooling=true;"
+  }  
 }

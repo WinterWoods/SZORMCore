@@ -18,6 +18,7 @@ namespace SZORM.Factory.SQLite
 
         public void ColumnEdit(DbContext dbContext, string tableName, ColumnModel model)
         {
+            throw new Exception("sqlite不支持修改表字段");
             var SqlGenerator = dbContext.DatabaseProvider.GetSqlGenerator();
             string sql = "ALTER TABLE " + SqlGenerator.GetQuoteName(tableName) + " MODIFY (" + FieldString(dbContext, model) + ")";
             dbContext.ExecuteNoQuery(sql);

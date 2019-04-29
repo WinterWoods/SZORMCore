@@ -57,7 +57,7 @@ namespace SZORM
                         //如果存在
                         __tablehas = true;
                         //就去检查所有的字段是否一致,
-                        List<ColumnModel> ColumnModels = _dbStructCheck.ColumnList(this, item.Name.ToUpper());
+                        List<ColumnModel> ColumnModels = _dbStructCheck.ColumnList(this, item.Name);
                         foreach (var item1 in __typeDescriptor.MappingMemberDescriptors)
                         {
                             bool __fieldhas = false;
@@ -68,8 +68,9 @@ namespace SZORM
                                 if (column.Name.ToUpper() == itemMember.Column.Name.ToUpper())
                                 {
                                     //开始比对,是否一样
+                                    var columnType = GetColumn(itemMember);
                                     if (itemMember.SZColumnAttribute.Required != column.Required
-                                        || GetColumn(itemMember).ColumnFullType != column.ColumnFullType)
+                                        || columnType.ColumnFullType != column.ColumnFullType)
                                     {
                                         _dbStructCheck.ColumnEdit(this, __typeDescriptor.Table.Name, GetColumn(itemMember));
                                     }
