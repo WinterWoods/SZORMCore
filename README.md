@@ -1,5 +1,5 @@
 # SZORM
-.net core框架下的 ORM,支持mssql,mysql,oracle,sqlite
+.net core框架下的 ORM,支持mssql,mysql,oracle,sqlite,postgresql
 
 ## 使用方式
 
