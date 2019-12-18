@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 using SZORM.Extensions;
 using SZORM.Infrastructure;
 using SZORM.Infrastructure.Interception;
@@ -73,16 +74,19 @@ namespace SZORM.Core
             }
         }
 
-        public void BeginTransaction(IsolationLevel? il=IsolationLevel.Serializable)
+        public void BeginTransaction(System.Data.IsolationLevel? il= System.Data.IsolationLevel.Serializable)
         {
             this.Activate();
 
-            if (il == null)
-                this._dbTransaction = this._dbConnection.BeginTransaction();
-            else
-                this._dbTransaction = this._dbConnection.BeginTransaction(il.Value);
+            if(Transaction.Current==null)
+            {
+                if (il == null)
+                    this._dbTransaction = this._dbConnection.BeginTransaction();
+                else
+                    this._dbTransaction = this._dbConnection.BeginTransaction(il.Value);
 
-            this._isInTransaction = true;
+                this._isInTransaction = true;
+            }
         }
         public void CommitTransaction()
         {

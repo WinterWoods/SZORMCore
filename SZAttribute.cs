@@ -9,6 +9,7 @@ namespace SZORM
     /// <summary>
     /// 表特征
     /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
     public sealed class SZTableAttribute : Attribute
     {
         /// <summary>
@@ -31,6 +32,7 @@ namespace SZORM
     /// <summary>
     /// 字段特征
     /// </summary>
+    [AttributeUsage(AttributeTargets.Property)]
     public sealed class SZColumnAttribute : Attribute
     {
         private bool isKey = false;
