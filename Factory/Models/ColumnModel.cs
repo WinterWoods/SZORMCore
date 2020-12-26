@@ -12,6 +12,10 @@ namespace SZORM.Factory.Models
         public bool IsKey { get; set; }
         public bool IsText { get; set; }
         /// <summary>
+        /// 文本类型
+        /// </summary>
+        public TextTypes? TextType { get; set; }
+        /// <summary>
         /// 只能在查询的时候使用
         /// </summary>
         public string ColumnFullType { get; set; }

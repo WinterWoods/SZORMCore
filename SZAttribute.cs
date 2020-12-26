@@ -35,6 +35,7 @@ namespace SZORM
     [AttributeUsage(AttributeTargets.Property)]
     public sealed class SZColumnAttribute : Attribute
     {
+        private TextTypes textType = TextTypes.Text;
         private bool isKey = false;
         /// <summary>
         /// 是否主键,默认值为false
@@ -132,7 +133,26 @@ namespace SZORM
                 notGen = value;
             }
         }
+        /// <summary>
+        /// 当不设置最大长度,长度为text,默认为Text
+        /// </summary>
+        public TextTypes TextTypes { get => textType; set => textType = value; }
+        /// <summary>
+        /// 是否存储搜索字段
+        /// </summary>
+        public bool IsSearchStr { get => isSearchStr; set => isSearchStr = value; }
+        /// <summary>
+        /// 是否搜索字段
+        /// </summary>
+        public bool IsSearchColumn { get => isSearchColumn; set => isSearchColumn = value; }
+
+        private bool isSearchStr = false;
+        private bool isSearchColumn = false;
 
         private bool notGen = false;
+    }
+    public enum TextTypes
+    {
+        Text, MediumText, LongText
     }
 }

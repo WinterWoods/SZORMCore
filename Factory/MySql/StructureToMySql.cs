@@ -95,7 +95,18 @@ namespace SZORM.Factory.MySql
             else if (column.type == typeof(string))
             {
                 if (column.IsText) {
-                    result = "TEXT";
+                    if(column.TextType==TextTypes.Text)
+                    {
+                        result = "TEXT";
+                    }
+                    else if(column.TextType == TextTypes.MediumText)
+                    {
+                        result = "MEDIUMTEXT";
+                    }
+                    else
+                    {
+                        result = "LONGTEXT";
+                    }
                 }
                 else
                 result = "VARCHAR(" + column.MaxLength + ")";
