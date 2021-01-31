@@ -34,6 +34,7 @@ namespace SZORM
         internal IDatabaseProvider _dbDatabaseProvider;
         internal string _dbConnectionStr;
         internal string _dbType;
+        bool isSelect = false;
         /// <summary>
         /// 默认打开事物处理
         /// </summary>
@@ -51,6 +52,12 @@ namespace SZORM
             _dbType = dbType;
             _dbConnectionStr = connStr;
             Init(il);
+        }
+        public DbContext(bool _isSelect, IsolationLevel il = IsolationLevel.ReadCommitted)
+        {
+            isSelect = _isSelect;
+            Type type = GetType();
+            DbContextInit(type.Name, il);
         }
         public void DbContextInit(string dbContextName, IsolationLevel il = IsolationLevel.ReadCommitted)
         {

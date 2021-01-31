@@ -25,7 +25,7 @@ namespace SZORM
                 if (!isok.ContainsKey(this._dbConnectionStr))
                 {
                     //开始验证数据库结构
-                    if (isUPDataBase)
+                    if (isUPDataBase&&!isSelect)
                     {
                        
                         CreateTable();
